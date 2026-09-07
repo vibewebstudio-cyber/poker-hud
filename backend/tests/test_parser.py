@@ -159,10 +159,12 @@ def test_replay_builder_pot_and_stacks():
 
 
 def test_ggpoker_parses():
-    """GGPoker adapter is unverified against a real export — this only
-    confirms it correctly parses the best-guess format it's built
-    against (tests/sample_hands/ggpoker_hand.txt) and produces the same
-    correct money math as PokerStars via the shared engine."""
+    """The tournament header format is now verified against a real
+    PokerCraft export (see ggpoker_parser.py's docstring) — this fixture
+    matches that confirmed structure: buy-in embedded inside the
+    tournament-name segment ("Mystery Battle Royale $5 Hold'em No
+    Limit"), and the ante nested inside the blinds parens ("200(25)")
+    rather than slash-separated. The cash header remains unverified."""
     hands = parse_ggpoker_file(str(GGPOKER_SAMPLE))
     assert len(hands) == 2, f"expected 2 hands, got {len(hands)}"
 
@@ -174,7 +176,10 @@ def test_ggpoker_parses():
 
     assert tourney.format == "tournament"
     assert tourney.tournament_id == "555666777"
+    assert tourney.buyin == "$5"
+    assert tourney.game_type == "Hold'em No Limit"
     assert tourney.level == "1"
+    assert tourney.big_blind == 200.0
     assert tourney.ante == 25.0
     assert tourney.hero_position == "SB"
     assert abs(tourney.hero_result - 625.0) < 0.01, f"expected 625.0, got {tourney.hero_result}"

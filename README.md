@@ -9,14 +9,22 @@ replays hands action-by-action, and flags rule-of-thumb preflop leaks.
 | Site | Parser status |
 |---|---|
 | PokerStars | Working, tested against synthetic hands. **Not yet run against a real export.** |
-| GGPoker | Implemented against a best-guess PokerCraft format. **Unverified — no real export tested.** |
+| GGPoker (tournament) | **Verified against a real PokerCraft export** (292 Mystery Battle Royale tournament files, 7,313 hands, 0 parse errors, hand count matched PokerCraft's own total exactly). |
+| GGPoker (cash) | Implemented against a best-guess format. **Still unverified** — the real sample used only had tournament hands. |
 | CoinPoker | Not implemented. Export format is unconfirmed; `parsers/coinpoker_parser.py` fails loudly with what's needed to build it. |
 
-Everything else (stats, dashboard, replayer, leak finder) has been exercised
-end-to-end in the browser, but only against hand-written synthetic data —
-not a real downloaded hand history file. Before trusting numbers from this
-tool, import a real export and spot-check a few hands against the site's own
-history viewer.
+The dashboard/replayer/leak-finder pipeline has now also been run end-to-end
+on the real GGPoker data above with zero errors. One caveat surfaced by that
+run: the leak finder's baselines (`stats/leak_finder.py`) are generic
+heuristics tuned for roughly normal ring-game/MTT dynamics — a fast,
+bounty-driven, rapidly-shortening-field format like Mystery Battle Royale
+may not fit them well (e.g. folding a lot to raises from late position when
+frequently short-stacked near the bubble isn't necessarily a leak). Treat
+flags against unusual formats skeptically until the baselines are tuned
+per format.
+
+PokerStars and GGPoker cash games still haven't been checked against real
+files — do that before trusting numbers from either.
 
 ## Setup
 

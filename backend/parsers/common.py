@@ -138,7 +138,7 @@ _RAISES_RE = re.compile(r"^(?P<name>.+?): raises \$?(?P<by>[\d,.]+) to \$?(?P<to
 _UNCALLED_RE = re.compile(r"^Uncalled bet \(\$?(?P<amt>[\d,.]+)\) returned to (?P<name>.+)$")
 _COLLECTED_RE = re.compile(r"^(?P<name>.+?) collected \$?(?P<amt>[\d,.]+) from")
 
-_STREET_TAG_RE = re.compile(r"^\*\*\* (FLOP|TURN|RIVER|HOLE CARDS|SHOW DOWN|SUMMARY) \*\*\*")
+_STREET_TAG_RE = re.compile(r"^\*\*\* (FLOP|TURN|RIVER|HOLE CARDS|SHOW ?DOWN|SUMMARY) \*\*\*")
 _FLOP_BOARD_RE = re.compile(r"^\*\*\* FLOP \*\*\* \[(?P<cards>.+?)\]")
 _NEW_CARD_RE = re.compile(r"\[(?P<cards>[^\[\]]+)\]\s*$")
 

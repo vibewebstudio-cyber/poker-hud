@@ -22,24 +22,27 @@ Hero collected $0.25 from pot
 Total pot $0.25 | Rake $0
 Seat 1: Hero collected ($0.25)
 
-Poker Hand #TM9876543210: Tournament #555666777, $5+$0.50 Hold'em No Limit - Level1(100/200/25) - 2026/01/07 12:05:00
+Poker Hand #BR9876543210: Tournament #555666777, Mystery Battle Royale $5 Hold'em No Limit - Level1(100/200(25)) - 2026/01/07 12:05:00
 Table '555666777 1' 3-max Seat #3 is the button
 Seat 1: Hero (3000 in chips)
 Seat 2: f00dbabe (3000 in chips)
 Seat 3: 1337c0de (3000 in chips)
-f00dbabe: posts the ante $25
-1337c0de: posts the ante $25
-Hero: posts the ante $25
+f00dbabe: posts the ante 25
+1337c0de: posts the ante 25
+Hero: posts the ante 25
 Hero: posts small blind 100
 f00dbabe: posts big blind 200
 *** HOLE CARDS ***
+Dealt to f00dbabe
+Dealt to 1337c0de
 Dealt to Hero [Qs Qd]
 1337c0de: raises 300 to 500
 Hero: raises 700 to 1200
 f00dbabe: folds
 1337c0de: folds
 Uncalled bet (700) returned to Hero
+*** SHOWDOWN ***
 Hero collected 1150 from pot
 *** SUMMARY ***
-Total pot 1150 | Rake 0
+Total pot 1150 | Rake 0 | Jackpot 0 | Bingo 0 | Fortune 0 | Tax 0
 Seat 1: Hero (small blind) collected (1150)
