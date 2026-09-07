@@ -1,0 +1,50 @@
+PokerStars Hand #400000001:  Hold'em No Limit ($0.50/$1.00 USD) - 2026/01/06 10:00:00 ET
+Table 'Side Pot Test' 3-max Seat #3 is the button
+Seat 1: Hero ($100 in chips)
+Seat 2: Player2 ($50 in chips)
+Seat 3: Player3 ($200 in chips)
+Hero: posts small blind $0.50
+Player2: posts big blind $1.00
+*** HOLE CARDS ***
+Dealt to Hero [Ah Kd]
+Player3: raises $199.00 to $200.00 and is all-in
+Hero: calls $99.50 and is all-in
+Player2: calls $49.00 and is all-in
+Uncalled bet ($100.00) returned to Player3
+*** FLOP *** [2c 7h 9s]
+*** TURN *** [2c 7h 9s] [Kc]
+*** RIVER *** [2c 7h 9s Kc] [4d]
+*** SHOW DOWN ***
+Player2: shows [2h 2d] (three of a kind, Deuces)
+Hero: shows [Ah Kd] (a pair of Kings)
+Player3: shows [Jc Jd] (a pair of Jacks)
+Player2 collected $150.00 from main pot
+Player3 collected $100.00 from side pot
+*** SUMMARY ***
+Total pot $250.00 Main pot $150.00 Side pot $100.00 | Rake $0
+Board [2c 7h 9s Kc 4d]
+Seat 1: Hero (small blind) showed [Ah Kd] and lost with a pair of Kings
+Seat 2: Player2 (big blind) showed [2h 2d] and won ($150.00) with three of a kind, Deuces
+Seat 3: Player3 (button) showed [Jc Jd] and won ($100.00) with a pair of Jacks
+
+PokerStars Hand #400000002:  Hold'em No Limit ($2.50/$5.00 USD) - 2026/01/06 10:05:00 ET
+Table 'Short Blind Test' 2-max Seat #1 is the button
+Seat 1: Hero ($100 in chips)
+Seat 2: Player2 ($3.00 in chips)
+Hero: posts small blind $2.50
+Player2: posts big blind $3.00 and is all-in
+*** HOLE CARDS ***
+Dealt to Hero [Qs Qh]
+Hero: calls $0.50
+*** FLOP *** [2c 7h 9s]
+*** TURN *** [2c 7h 9s] [Kc]
+*** RIVER *** [2c 7h 9s Kc] [4d]
+*** SHOW DOWN ***
+Hero: shows [Qs Qh] (a pair of Queens)
+Player2: shows [5h 5d] (a pair of Fives)
+Hero collected $6.00 from pot
+*** SUMMARY ***
+Total pot $6.00 | Rake $0
+Board [2c 7h 9s Kc 4d]
+Seat 1: Hero (button) (small blind) showed [Qs Qh] and won ($6.00) with a pair of Queens
+Seat 2: Player2 (big blind) showed [5h 5d] and lost with a pair of Fives

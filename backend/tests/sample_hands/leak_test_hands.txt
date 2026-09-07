@@ -1,0 +1,51 @@
+PokerStars Hand #500000001:  Hold'em No Limit ($0.25/$0.50 USD) - 2026/01/08 09:00:00 ET
+Table 'Leak Test' 6-max Seat #5 is the button
+Seat 1: Hero ($50 in chips)
+Seat 2: Player2 ($50 in chips)
+Seat 3: Player3 ($50 in chips)
+Seat 4: Player4 ($50 in chips)
+Seat 5: Player5 ($50 in chips)
+Seat 6: Player6 ($50 in chips)
+Player6: posts small blind $0.25
+Hero: posts big blind $0.50
+*** HOLE CARDS ***
+Dealt to Hero [7c 2d]
+Player2: folds
+Player3: raises $1.00 to $1.50
+Player4: folds
+Player5: folds
+Player6: folds
+Hero: folds
+Uncalled bet ($1.00) returned to Player3
+Player3 collected $1.25 from pot
+*** SUMMARY ***
+Total pot $1.25 | Rake $0
+Seat 3: Player3 collected ($1.25)
+
+PokerStars Hand #500000002:  Hold'em No Limit ($0.25/$0.50 USD) - 2026/01/08 09:05:00 ET
+Table 'Leak Test' 6-max Seat #5 is the button
+Seat 1: Hero ($50 in chips)
+Seat 2: Player2 ($50 in chips)
+Seat 3: Player3 ($50 in chips)
+Seat 4: Player4 ($50 in chips)
+Seat 5: Player5 ($50 in chips)
+Seat 6: Player6 ($50 in chips)
+Player6: posts small blind $0.25
+Hero: posts big blind $0.50
+*** HOLE CARDS ***
+Dealt to Hero [Jh Jd]
+Player2: folds
+Player3: raises $1.00 to $1.50
+Player4: folds
+Player5: folds
+Player6: folds
+Hero: calls $1.00
+*** FLOP *** [4s 9c 2h]
+Player3: bets $2.00
+Hero: folds
+Uncalled bet ($2.00) returned to Player3
+Player3 collected $3.25 from pot
+*** SUMMARY ***
+Total pot $3.25 | Rake $0
+Board [4s 9c 2h]
+Seat 3: Player3 collected ($3.25)

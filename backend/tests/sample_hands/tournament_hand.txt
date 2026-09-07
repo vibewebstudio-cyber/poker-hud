@@ -1,0 +1,21 @@
+PokerStars Hand #300000001: Tournament #987654321, $10+$1 USD Hold'em No Limit - Level V (100/200/25) - 2026/01/05 20:00:00 ET
+Table '987654321 1' 9-max Seat #3 is the button
+Seat 1: Hero (3000 in chips)
+Seat 2: Villain2 (3000 in chips)
+Seat 3: Villain3 (3000 in chips)
+Villain2: posts the ante 25
+Villain3: posts the ante 25
+Hero: posts the ante 25
+Hero: posts small blind 100
+Villain2: posts big blind 200
+*** HOLE CARDS ***
+Dealt to Hero [Qs Qd]
+Villain3: raises 300 to 500
+Hero: raises 700 to 1200
+Villain2: folds
+Villain3: folds
+Uncalled bet (700) returned to Hero
+Hero collected 1150 from pot
+*** SUMMARY ***
+Total pot 1150 | Rake 0
+Seat 1: Hero (small blind) collected (1150)

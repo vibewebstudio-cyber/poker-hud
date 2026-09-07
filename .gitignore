@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local databases (personal hand history data — never commit)
+*.db
+backend/poker.db
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db
+
+# Real hand history exports — personal data, keep local only
+backend/tests/real_samples/
