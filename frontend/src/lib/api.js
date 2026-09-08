@@ -1,3 +1,5 @@
+import { getToken } from './auth.jsx'
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 function toQueryString(filters) {
@@ -9,12 +11,30 @@ function toQueryString(filters) {
   return qs ? `?${qs}` : ''
 }
 
+function authHeaders() {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 async function getJson(path) {
-  const res = await fetch(`${API_BASE}${path}`)
+  const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() })
   if (!res.ok) {
     throw new Error(`${path} failed: ${res.status}`)
   }
   return res.json()
+}
+
+async function postForm(path, formData) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: formData,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.detail || `${path} failed: ${res.status}`)
+  }
+  return data
 }
 
 export function fetchHeroStats(filters) {
@@ -39,4 +59,12 @@ export function fetchHandReplay(handId) {
 
 export function fetchLeaks(filters) {
   return getJson(`/api/leaks${toQueryString(filters)}`)
+}
+
+export function uploadHandHistories(files) {
+  const formData = new FormData()
+  for (const file of files) {
+    formData.append('files', file)
+  }
+  return postForm('/api/import', formData)
 }

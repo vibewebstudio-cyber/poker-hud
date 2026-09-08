@@ -1,5 +1,7 @@
 """CLI for importing hand histories into SQLite and printing basic stats,
-without needing the web UI running.
+without needing the web UI running. Imports go under a fixed local-use
+account (auto-created on first use) so this works without logging in —
+see db.importer.get_or_create_local_user.
 
 Usage:
     python cli.py import <file_or_folder> [--db poker.db] [--site auto|pokerstars|ggpoker]
@@ -15,36 +17,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from db.importer import get_connection, import_hands, init_db
-from parsers import ggpoker_parser, pokerstars_parser
+from db.importer import get_connection, get_or_create_local_user, import_hands, init_db
+from importing import SITE_ADAPTERS, parse_path
 from stats.calculators import compute_player_stats, list_players
-
-# Ordered by how specific the hand-start marker is — PokerStars' is a
-# strict superset-looking prefix ("PokerStars Hand #" vs GGPoker's
-# "Poker Hand #"), but the two never actually collide since "PokerStars"
-# and "Poker " diverge at the 6th character, so order doesn't matter.
-SITE_ADAPTERS = {
-    "pokerstars": (pokerstars_parser, "PokerStars Hand #"),
-    "ggpoker": (ggpoker_parser, "Poker Hand #"),
-}
-
-
-def _detect_site(path: Path) -> str | None:
-    with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
-        for line in f:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            for site, (_module, prefix) in SITE_ADAPTERS.items():
-                if stripped.startswith(prefix):
-                    return site
-            return None
-    return None
 
 
 def cmd_import(args: argparse.Namespace) -> None:
     conn = get_connection(args.db)
     init_db(conn)
+    user_id = get_or_create_local_user(conn)
 
     target = Path(args.path)
     files = [target] if target.is_file() else sorted(target.glob("*.txt"))
@@ -55,7 +36,7 @@ def cmd_import(args: argparse.Namespace) -> None:
     total_imported = 0
     total_duplicates = 0
     for f in files:
-        site = args.site if args.site != "auto" else _detect_site(f)
+        hands, site = parse_path(str(f), args.site)
         if site is None:
             print(f"{f.name}: couldn't detect the site (unrecognized header) — skipped", file=sys.stderr)
             continue
@@ -63,9 +44,7 @@ def cmd_import(args: argparse.Namespace) -> None:
             print(f"{f.name}: no parser available for '{site}' yet — skipped", file=sys.stderr)
             continue
 
-        module, _prefix = SITE_ADAPTERS[site]
-        hands = module.parse_file(str(f))
-        imported, duplicates = import_hands(conn, hands)
+        imported, duplicates = import_hands(conn, hands, user_id)
         print(f"{f.name} [{site}]: parsed {len(hands)} hands, imported {imported}, skipped {duplicates} duplicates")
         total_imported += imported
         total_duplicates += duplicates
@@ -75,7 +54,8 @@ def cmd_import(args: argparse.Namespace) -> None:
 
 def cmd_stats(args: argparse.Namespace) -> None:
     conn = get_connection(args.db)
-    stats = compute_player_stats(conn, args.player)
+    user_id = get_or_create_local_user(conn)
+    stats = compute_player_stats(conn, args.player, user_id)
     if stats.hands == 0:
         print(f"No hands found for player '{args.player}'")
         return
@@ -88,12 +68,13 @@ def cmd_stats(args: argparse.Namespace) -> None:
 
 def cmd_players(args: argparse.Namespace) -> None:
     conn = get_connection(args.db)
-    for name in list_players(conn):
+    user_id = get_or_create_local_user(conn)
+    for name in list_players(conn, user_id):
         print(name)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Poker hand tracker CLI (Phase 1)")
+    parser = argparse.ArgumentParser(description="Poker hand tracker CLI")
     parser.add_argument("--db", default="poker.db", help="Path to SQLite database file")
     sub = parser.add_subparsers(dest="command", required=True)
 

@@ -1,7 +1,15 @@
--- Poker Hand Tracker schema (Phase 1: PokerStars only)
+-- Poker Hand Tracker schema
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS hands (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     site TEXT NOT NULL,
     hand_number TEXT NOT NULL,
     format TEXT NOT NULL,              -- 'cash' or 'tournament'
@@ -27,7 +35,7 @@ CREATE TABLE IF NOT EXISTS hands (
     rake REAL,
     hero_result REAL,
     raw_text TEXT NOT NULL,
-    UNIQUE(site, hand_number)
+    UNIQUE(user_id, site, hand_number)
 );
 
 CREATE TABLE IF NOT EXISTS hand_players (
@@ -62,6 +70,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     net_result REAL
 );
 
+CREATE INDEX IF NOT EXISTS idx_hands_user_id ON hands(user_id);
 CREATE INDEX IF NOT EXISTS idx_actions_hand_id ON actions(hand_id);
 CREATE INDEX IF NOT EXISTS idx_hand_players_hand_id ON hand_players(hand_id);
 CREATE INDEX IF NOT EXISTS idx_hand_players_player_name ON hand_players(player_name);

@@ -9,11 +9,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from datetime import datetime, timezone
+
+from auth.security import hash_password
 from db.importer import get_connection, import_hands, init_db
 from parsers.pokerstars_parser import parse_file
 from parsers.ggpoker_parser import parse_file as parse_ggpoker_file
 from replay.builder import get_hand_replay
-from stats.calculators import HandFilters, PlayerStats, compute_hero_stats, compute_player_stats, compute_position_stats
+from stats.calculators import (
+    HandFilters,
+    PlayerStats,
+    compute_hero_stats,
+    compute_player_stats,
+    compute_position_stats,
+    list_hero_hands,
+)
 from stats.leak_finder import (
     _check_fold_to_raise_by_position,
     _check_limping,
@@ -27,6 +37,15 @@ SIDE_POT_SAMPLE = Path(__file__).parent / "sample_hands" / "side_pot_hands.txt"
 TOURNAMENT_SAMPLE = Path(__file__).parent / "sample_hands" / "tournament_hand.txt"
 GGPOKER_SAMPLE = Path(__file__).parent / "sample_hands" / "ggpoker_hand.txt"
 LEAK_SAMPLE = Path(__file__).parent / "sample_hands" / "leak_test_hands.txt"
+
+
+def _create_user(conn, email: str) -> int:
+    cur = conn.execute(
+        "INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)",
+        (email, hash_password("testpassword123"), datetime.now(timezone.utc).isoformat()),
+    )
+    conn.commit()
+    return cur.lastrowid
 
 
 def test_parse_count_and_positions():
@@ -85,14 +104,15 @@ def test_db_import_roundtrip(tmp_db="__test_poker.db"):
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "roundtrip@test.com")
 
     hands = parse_file(str(SAMPLE))
-    imported, duplicates = import_hands(conn, hands)
+    imported, duplicates = import_hands(conn, hands, user_id)
     assert imported == 5, f"expected 5 imported, got {imported}"
     assert duplicates == 0
 
-    # Re-importing the same hands should be a no-op (dedup on site+hand_number).
-    imported2, duplicates2 = import_hands(conn, hands)
+    # Re-importing the same hands should be a no-op (dedup on user+site+hand_number).
+    imported2, duplicates2 = import_hands(conn, hands, user_id)
     assert imported2 == 0
     assert duplicates2 == 5
 
@@ -109,11 +129,12 @@ def test_vpip_pfr_3bet():
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "vpip@test.com")
 
     hands = parse_file(str(SAMPLE))
-    import_hands(conn, hands)
+    import_hands(conn, hands, user_id)
 
-    stats = compute_player_stats(conn, "Hero")
+    stats = compute_player_stats(conn, "Hero", user_id)
     assert stats.hands == 5
     assert stats.vpip_pct == 80.0, f"expected VPIP 80.0, got {stats.vpip_pct}"
     assert stats.pfr_pct == 60.0, f"expected PFR 60.0, got {stats.pfr_pct}"
@@ -135,13 +156,14 @@ def test_replay_builder_pot_and_stacks():
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "replay@test.com")
 
     hands = parse_file(str(SAMPLE))
-    import_hands(conn, hands)
+    import_hands(conn, hands, user_id)
 
     row = conn.execute("SELECT id FROM hands WHERE hand_number = ?", ("200000002",)).fetchone()
     hand_id = row[0]
-    replay = get_hand_replay(conn, hand_id)
+    replay = get_hand_replay(conn, hand_id, user_id)
 
     assert replay is not None
     assert len(replay["steps"]) == len(hands[1].actions)
@@ -152,7 +174,7 @@ def test_replay_builder_pot_and_stacks():
     )
 
     assert conn.execute("SELECT COUNT(*) FROM hands WHERE id = -1").fetchone()[0] == 0
-    assert get_hand_replay(conn, -1) is None
+    assert get_hand_replay(conn, -1, user_id) is None
 
     conn.close()
     db_path.unlink()
@@ -193,20 +215,21 @@ def test_tournament_bb_per_100_excluded():
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "bb100@test.com")
 
     cash_hands = parse_file(str(SAMPLE))
     tourney_hands = parse_file(str(TOURNAMENT_SAMPLE))
-    import_hands(conn, cash_hands)
-    import_hands(conn, tourney_hands)
+    import_hands(conn, cash_hands, user_id)
+    import_hands(conn, tourney_hands, user_id)
 
-    tourney_stats = compute_hero_stats(conn, HandFilters(format="tournament"))
+    tourney_stats = compute_hero_stats(conn, HandFilters(user_id=user_id, format="tournament"))
     assert tourney_stats.hands == 1
     assert abs(tourney_stats.total_result - 625.0) < 0.01
     assert tourney_stats.bb_per_100 is None, (
         f"expected bb_per_100 None for tournament-only hands, got {tourney_stats.bb_per_100}"
     )
 
-    cash_stats = compute_hero_stats(conn, HandFilters(format="cash"))
+    cash_stats = compute_hero_stats(conn, HandFilters(user_id=user_id, format="cash"))
     assert cash_stats.bb_per_100 is not None
 
     conn.close()
@@ -223,11 +246,12 @@ def test_position_stats_and_fold_to_raise():
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "leaks@test.com")
 
     hands = parse_file(str(LEAK_SAMPLE))
-    import_hands(conn, hands)
+    import_hands(conn, hands, user_id)
 
-    by_position = compute_position_stats(conn)
+    by_position = compute_position_stats(conn, HandFilters(user_id=user_id))
     assert "BB" in by_position, f"expected BB in position stats, got {list(by_position.keys())}"
     bb = by_position["BB"]
     assert bb.hands == 2
@@ -250,9 +274,10 @@ def test_leak_finder_insufficient_data():
         db_path.unlink()
     conn = get_connection(str(db_path))
     init_db(conn)
+    user_id = _create_user(conn, "insufficient@test.com")
 
-    import_hands(conn, parse_file(str(SAMPLE)))
-    flags = find_leaks(conn)
+    import_hands(conn, parse_file(str(SAMPLE)), user_id)
+    flags = find_leaks(conn, HandFilters(user_id=user_id))
     assert len(flags) == 1 and flags[0].rule_id == "insufficient_data", (
         f"expected a single insufficient_data flag, got {flags}"
     )
@@ -294,6 +319,45 @@ def test_leak_rule_thresholds():
     assert len(flags) == 1 and flags[0].position == "BB", f"expected only BB flagged, got {flags}"
 
 
+def test_multi_user_isolation():
+    """Two users each import the same fixture — each must only ever see
+    their own hands (stats, hands-list, replay), and dedup must be
+    per-user (not global), since two different people can legitimately
+    hold "the same" hand from having played at the same table."""
+    db_path = Path("__test_multiuser.db")
+    if db_path.exists():
+        db_path.unlink()
+    conn = get_connection(str(db_path))
+    init_db(conn)
+
+    alice = _create_user(conn, "alice@test.com")
+    bob = _create_user(conn, "bob@test.com")
+
+    hands = parse_file(str(SAMPLE))
+    imported_a, _ = import_hands(conn, hands, alice)
+    assert imported_a == 5
+
+    bob_stats = compute_hero_stats(conn, HandFilters(user_id=bob))
+    assert bob_stats.hands == 0, f"expected Bob to see 0 hands before importing, got {bob_stats.hands}"
+    assert list_hero_hands(conn, HandFilters(user_id=bob)) == []
+
+    alice_stats = compute_hero_stats(conn, HandFilters(user_id=alice))
+    assert alice_stats.hands == 5
+
+    # Same (site, hand_number) pairs as Alice's — must import cleanly for
+    # Bob since dedup is scoped per-user, not global.
+    imported_b, duplicates_b = import_hands(conn, hands, bob)
+    assert imported_b == 5, f"expected Bob's import to succeed independently of Alice's, got {imported_b}"
+    assert duplicates_b == 0
+
+    alice_hand_id = conn.execute("SELECT id FROM hands WHERE user_id = ? LIMIT 1", (alice,)).fetchone()[0]
+    assert get_hand_replay(conn, alice_hand_id, bob) is None, "Bob must not see Alice's hand by id"
+    assert get_hand_replay(conn, alice_hand_id, alice) is not None
+
+    conn.close()
+    db_path.unlink()
+
+
 if __name__ == "__main__":
     tests = [
         test_parse_count_and_positions,
@@ -309,6 +373,7 @@ if __name__ == "__main__":
         test_position_stats_and_fold_to_raise,
         test_leak_finder_insufficient_data,
         test_leak_rule_thresholds,
+        test_multi_user_isolation,
     ]
     failures = 0
     for t in tests:

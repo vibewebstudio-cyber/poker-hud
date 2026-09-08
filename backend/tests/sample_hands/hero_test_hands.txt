@@ -15,7 +15,7 @@ Player2: folds
 Player3: folds
 Player4: folds
 Player5: folds
-Player6: collected $0.75 from pot
+Player6 collected $0.75 from pot
 *** SUMMARY ***
 Total pot $0.75 | Rake $0
 Board []

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import StatCard from '../components/StatCard.jsx'
 import FilterPanel from '../components/FilterPanel.jsx'
 import ProfitGraph from '../components/ProfitGraph.jsx'
@@ -50,8 +51,11 @@ export default function DashboardPage() {
       <div className="max-w-3xl mx-auto mt-16 rounded-xl border border-slate-800 bg-slate-900/60 px-6 py-8 text-center">
         <p className="text-slate-300 font-medium">No hands imported yet.</p>
         <p className="text-sm text-slate-500 mt-2">
-          Run <code className="text-slate-300">python cli.py import &lt;path&gt;</code> in the backend
-          folder, then reload this page.
+          <Link to="/import" className="text-cyan-400 hover:underline">
+            Upload a hand history file
+          </Link>{' '}
+          to get started, or run{' '}
+          <code className="text-slate-300">python cli.py import &lt;path&gt;</code> locally.
         </p>
       </div>
     )

@@ -1,0 +1,26 @@
+# Fly.io app config. `fly launch` (run once, interactively, from this
+# backend/ directory) generates/overwrites most of this — this file is a
+# starting point so the important bits (the persistent volume for
+# poker.db, and the port) are already right.
+#
+# app name must be globally unique on Fly — `fly launch` will prompt you
+# to change it if "poker-hand-tracker" is taken.
+app = "poker-hand-tracker"
+primary_region = "iad"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "poker_hud_data"
+  destination = "/data"
+
+[env]
+  # Real values go in `fly secrets set JWT_SECRET=... CORS_ORIGINS=...`
+  # (see README) — never commit real secrets into this file.

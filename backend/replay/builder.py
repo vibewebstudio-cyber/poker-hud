@@ -13,13 +13,16 @@ from __future__ import annotations
 import sqlite3
 
 
-def get_hand_replay(conn: sqlite3.Connection, hand_id: int) -> dict | None:
+def get_hand_replay(conn: sqlite3.Connection, hand_id: int, user_id: int) -> dict | None:
+    """Returns None both when the hand doesn't exist and when it exists
+    but belongs to a different user — the two cases are indistinguishable
+    on purpose, so one user can't confirm another's hand IDs by probing."""
     hand_row = conn.execute(
         """SELECT id, site, hand_number, format, game_type, stakes, small_blind,
                   big_blind, ante, currency, table_name, table_size, button_seat,
                   date, hero_name, hero_cards, board, pot_size, rake
-           FROM hands WHERE id = ?""",
-        (hand_id,),
+           FROM hands WHERE id = ? AND user_id = ?""",
+        (hand_id, user_id),
     ).fetchone()
     if hand_row is None:
         return None

@@ -6,6 +6,7 @@ venv/
 
 # Local databases (personal hand history data — never commit)
 *.db
+*.db.*
 backend/poker.db
 
 # Node / frontend

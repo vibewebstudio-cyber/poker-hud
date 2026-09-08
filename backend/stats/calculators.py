@@ -35,6 +35,7 @@ class PlayerStats:
 
 @dataclass
 class HandFilters:
+    user_id: int | None = None
     date_from: str | None = None
     date_to: str | None = None
     format: str | None = None  # 'cash' or 'tournament'
@@ -42,10 +43,12 @@ class HandFilters:
     position: str | None = None
 
 
-def _hand_ids_for_player(conn: sqlite3.Connection, player_name: str) -> list[int]:
+def _hand_ids_for_player(conn: sqlite3.Connection, player_name: str, user_id: int) -> list[int]:
     rows = conn.execute(
-        "SELECT DISTINCT hand_id FROM hand_players WHERE player_name = ?",
-        (player_name,),
+        """SELECT DISTINCT hp.hand_id FROM hand_players hp
+           JOIN hands h ON h.id = hp.hand_id
+           WHERE hp.player_name = ? AND h.user_id = ?""",
+        (player_name, user_id),
     ).fetchall()
     return [r[0] for r in rows]
 
@@ -135,8 +138,8 @@ def _aggregate(
     )
 
 
-def compute_player_stats(conn: sqlite3.Connection, player_name: str) -> PlayerStats:
-    hand_ids = _hand_ids_for_player(conn, player_name)
+def compute_player_stats(conn: sqlite3.Connection, player_name: str, user_id: int) -> PlayerStats:
+    hand_ids = _hand_ids_for_player(conn, player_name, user_id)
     flags = [_preflop_flags(conn, hid, player_name) for hid in hand_ids]
     results = []
     big_blinds = []
@@ -156,13 +159,15 @@ def _filtered_hero_hands(conn: sqlite3.Connection, filters: HandFilters | None) 
     """Returns rows of (hand_id, hero_name, net_result, big_blind, date) for
     hero-flagged hands matching the given filters, ordered by date."""
     filters = filters or HandFilters()
+    if filters.user_id is None:
+        raise ValueError("HandFilters.user_id is required — every query must be scoped to a user")
     query = """
         SELECT hp.hand_id, hp.player_name, hp.net_result, h.big_blind, h.date, h.format
         FROM hand_players hp
         JOIN hands h ON h.id = hp.hand_id
-        WHERE hp.is_hero = 1
+        WHERE hp.is_hero = 1 AND h.user_id = ?
     """
-    params: list = []
+    params: list = [filters.user_id]
     if filters.date_from:
         query += " AND h.date >= ?"
         params.append(filters.date_from)
@@ -196,10 +201,15 @@ def compute_position_stats(
     """Hero stats broken out by position, for positional-leak analysis.
     Positions with zero hero hands in range are omitted."""
     filters = filters or HandFilters()
+    if filters.user_id is None:
+        raise ValueError("HandFilters.user_id is required — every query must be scoped to a user")
     positions = [
         r[0]
         for r in conn.execute(
-            "SELECT DISTINCT position FROM hand_players WHERE is_hero = 1 AND position IS NOT NULL"
+            """SELECT DISTINCT hp.position FROM hand_players hp
+               JOIN hands h ON h.id = hp.hand_id
+               WHERE hp.is_hero = 1 AND hp.position IS NOT NULL AND h.user_id = ?""",
+            (filters.user_id,),
         ).fetchall()
     ]
     result = {}
@@ -239,14 +249,16 @@ def list_hero_hands(
 ) -> list[dict]:
     """Hand summaries for the hands-list view, most recent first."""
     filters = filters or HandFilters()
+    if filters.user_id is None:
+        raise ValueError("HandFilters.user_id is required — every query must be scoped to a user")
     query = """
         SELECT h.id, h.date, h.format, h.game_type, h.stakes, hp.position,
                h.hero_cards, h.board, h.pot_size, hp.net_result
         FROM hand_players hp
         JOIN hands h ON h.id = hp.hand_id
-        WHERE hp.is_hero = 1
+        WHERE hp.is_hero = 1 AND h.user_id = ?
     """
-    params: list = []
+    params: list = [filters.user_id]
     if filters.date_from:
         query += " AND h.date >= ?"
         params.append(filters.date_from)
@@ -283,26 +295,33 @@ def list_hero_hands(
     ]
 
 
-def filter_options(conn: sqlite3.Connection) -> dict:
-    """Distinct values available for the filter panel, derived from hero hands."""
+def filter_options(conn: sqlite3.Connection, user_id: int) -> dict:
+    """Distinct values available for the filter panel, derived from this
+    user's own hero hands only."""
     stakes = conn.execute(
         """SELECT DISTINCT h.stakes FROM hands h
            JOIN hand_players hp ON hp.hand_id = h.id
-           WHERE hp.is_hero = 1 ORDER BY h.stakes"""
+           WHERE hp.is_hero = 1 AND h.user_id = ? ORDER BY h.stakes""",
+        (user_id,),
     ).fetchall()
     formats = conn.execute(
         """SELECT DISTINCT h.format FROM hands h
            JOIN hand_players hp ON hp.hand_id = h.id
-           WHERE hp.is_hero = 1 ORDER BY h.format"""
+           WHERE hp.is_hero = 1 AND h.user_id = ? ORDER BY h.format""",
+        (user_id,),
     ).fetchall()
     positions = conn.execute(
         """SELECT DISTINCT hp.position FROM hand_players hp
-           WHERE hp.is_hero = 1 AND hp.position IS NOT NULL ORDER BY hp.position"""
+           JOIN hands h ON h.id = hp.hand_id
+           WHERE hp.is_hero = 1 AND hp.position IS NOT NULL AND h.user_id = ?
+           ORDER BY hp.position""",
+        (user_id,),
     ).fetchall()
     date_range = conn.execute(
         """SELECT MIN(h.date), MAX(h.date) FROM hands h
            JOIN hand_players hp ON hp.hand_id = h.id
-           WHERE hp.is_hero = 1"""
+           WHERE hp.is_hero = 1 AND h.user_id = ?""",
+        (user_id,),
     ).fetchone()
 
     return {
@@ -314,6 +333,11 @@ def filter_options(conn: sqlite3.Connection) -> dict:
     }
 
 
-def list_players(conn: sqlite3.Connection) -> list[str]:
-    rows = conn.execute("SELECT DISTINCT player_name FROM hand_players ORDER BY player_name").fetchall()
+def list_players(conn: sqlite3.Connection, user_id: int) -> list[str]:
+    rows = conn.execute(
+        """SELECT DISTINCT hp.player_name FROM hand_players hp
+           JOIN hands h ON h.id = hp.hand_id
+           WHERE h.user_id = ? ORDER BY hp.player_name""",
+        (user_id,),
+    ).fetchall()
     return [r[0] for r in rows]
